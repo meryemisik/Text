@@ -5,7 +5,7 @@
         class="form-control form-control-lg"
         ref="txt"
         type="file"
-        @change="readFile()  "
+        @change="readFile()"
       />
     </div>
     <div class="form-floating">
@@ -17,10 +17,12 @@
         style="height: 100px"
       >
       </textarea>
+     <p style="color:red;">Metin içindeki b harfinin sayısı : 
+       {{sayac}}
+     </p>
     </div>
   </div>
 </template>
-
 <script>
 export default {
   name: "app",
@@ -28,91 +30,67 @@ export default {
     return {
       content: "",
       file: null,
+      sayac : "",
     };
   },
   methods: {
-   getMimeType(file) {
-    return new Promise(function (resolve, reject) {
-      var mimeType = '';
-      var fr = new FileReader();
-      fr.onprogress = function(e) {
-        var header = '';
-        if (e.loaded > 4) {
-          var arr = (new Uint8Array(e.target.result)).subarray(0, 4);
-          for (var i = 0; i < arr.length; i++) {
-            header += arr[i].toString(16);
-          }         
-          // switch (header) {
-          //   case '89504e47':
-          //     mimeType = 'image/png';
-          //     break;
-          //   case "ffd8ffe0":
-          //   case "ffd8ffe1":
-          //   case "ffd8ffe2":
-          //     mimeType = 'image/jpeg';
-          //     break;
-          //   case "44656e65":
-          //     mimeType = 'text/txt';
-          //     break;
-          //   case '3026b275':
-          //     mimeType = 'video/x-ms-wmv';
-          //     break;
-          //   case '25504446':
-          //     mimeType = 'application/pdf';
-          //     break;
-          //   case '0001c':
-          //   case '00018':
-          //     mimeType = 'video/mp4';
-          //     break;
-          //   case '1a45dfa3':
-          //     mimeType = 'video/webm';
-          //     break;
-          //   case '4f676753':
-          //     mimeType = 'video/ogg';
-          //     break;
-          //   case '464c561':
-          //     mimeType = 'video/x-flv';
-          //     break;
-          //   case '38425053':
-          //     mimeType = 'psd';
-          //     break;
-          //   case '504b34':
-          //     mimeType = 'office document (doc, pptx, xlsx)';
-          //     break;
-          //   case '49443b4e':
-          //     mimeType = 'text/csv';
-          //     break;
-          //   default:
-          //     mimeType = '';
-          // }
-          resolve({'file': file, 'header': header, 'type': mimeType});
-        }
-      }
-      fr.readAsArrayBuffer(file);
-    });
-  },
+    getMimeType(file) {
+      return new Promise(function (resolve, reject) {
+        var mimeType = "";
+        var fr = new FileReader();
+        fr.onprogress = function (e) {
+          var header = "";
+          if (e.loaded > 4) {
+            var arr = new Uint8Array(e.target.result).subarray(0, 4);
+            for (var i = 0; i < arr.length; i++) {
+              header += arr[i].toString(16);
+            }
+            switch (header) {
+              case "3c21444f":
+                mimeType = "text/html";
+                break;
+              case "42752067":
+                mimeType = "text/txt";
+                break;
+              case "49443b4e":
+                mimeType = "text/csv";
+                break;
+              default:
+                mimeType = "";
+            }
+            resolve({ file: file, header: header, type: mimeType });
+          }
+        };
+        fr.readAsArrayBuffer(file);
+      });
+    },
     readFile() {
+     
       this.file = this.$refs.txt.files[0];
-      alert(this.file.type)
-      this.getMimeType(this.file).then(data =>{
-        console.log(data);
-        alert(data.type)
-        if(data.type.indexOf("text/")>=0)
-        {
-
-            const reader = new FileReader();
-            reader.onload = (res) => {
-              this.content = res.target.result;
-            };
-            reader.onerror = (err) => console.log(err);
-            reader.readAsText(this.file);
-        }
-        else{
+      this.getMimeType(this.file).then((data) => {
+        if (data.type.indexOf("text/") >= 0) {
+          const reader = new FileReader();
+          reader.onload = (res) => {
+          this.content = res.target.result;
+          var sayac=0;
+          var metin = this.content.split("");        
+         for(var i = 0; i<metin.length;i++){
+           if(metin[i]==="b" || metin[i] === "B"){
+             sayac++;
+                      
+           }
+         }
+         this.sayac=sayac;
+         console.log("metnin içindeki b sayısı : " + sayac);
+          };       
+          reader.onerror = (err) => console.log(err);
+          reader.readAsText(this.file);
+        } else {
           this.$refs.txt.value = null;
           this.content = "";
           alert("This type does not supported");
         }
-      })
+      });
     },
   },
 };
